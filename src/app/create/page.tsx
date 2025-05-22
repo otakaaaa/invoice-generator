@@ -26,7 +26,7 @@ import { ja } from 'date-fns/locale';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { invoiceFormAtom } from '@/atoms/invoiceFormAtom';
-import { invoiceSchema, InvoiceItem, Invoice } from '@/types/invoice';
+import { invoiceSchema, InvoiceItem } from '@/types/invoice';
 import { InvoiceDocument } from '@/components/pdf/InvoiceDocument';
 
 export default function CreateInvoice() {
@@ -41,7 +41,6 @@ export default function CreateInvoice() {
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: string | number) => {
     setInvoiceForm((prev) => {
       const newItems = [...prev.items];
-      const numericValue = typeof value === 'string' ? Number(value) : value;
 
       // 更新対象の項目を取得
       const targetItem = { ...newItems[index] };
@@ -143,11 +142,13 @@ export default function CreateInvoice() {
       }
       
       setErrors({});
-    } catch (error: any) {
+    } catch (error: unknown) {
       const formErrors: { [key: string]: string } = {};
-      error.errors.forEach((err: any) => {
-        formErrors[err.path.join('.')] = err.message;
-      });
+      if (error instanceof Error && 'errors' in error) {
+        (error as { errors: Array<{ path: string[], message: string }> }).errors.forEach((err) => {
+          formErrors[err.path.join('.')] = err.message;
+        });
+      }
       setErrors(formErrors);
     }
   };
